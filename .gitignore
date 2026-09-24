@@ -1,2 +1,2 @@
-# Ignore live submissions
-data/entries.json
+# Ignore all data files (live, backups, test sets)
+data/*.json
