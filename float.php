@@ -42,8 +42,9 @@
     const POLL_MS = 3000;       // how often to check for new entries
     const DRIFT_PX = 28;        // how far each bubble wanders from its spot
     const EDGE = 24;            // keep bubbles this far from the screen edge
-    const COVERAGE = 0.42;      // share of the screen the cards should fill before they start shrinking
-    const MIN_FIT = 0.4;        // smallest the cards will get (0.4 = 40% of full size)
+    const COVERAGE = 0.42;      // share of the screen the cards together should fill; sets the card size
+    const MIN_FIT = 0.4;        // smallest the cards will get (0.4 = 40% of normal size)
+    const MAX_FIT = 2.4;        // biggest the cards will get when there are only a few (2.4 = 240%)
 
     const stage = document.getElementById('stage');
     const backdrop = document.getElementById('focus-backdrop');
@@ -75,7 +76,7 @@
         const n = seen.size;
         if (!n || !baseArea) return 1;
         const f = Math.sqrt(COVERAGE * stage.clientWidth * stage.clientHeight / (n * baseArea));
-        return Math.max(MIN_FIT, Math.min(1, f));
+        return Math.max(MIN_FIT, Math.min(MAX_FIT, f));
     }
 
     function setFit(f) {
