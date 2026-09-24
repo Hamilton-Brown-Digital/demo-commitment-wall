@@ -2,7 +2,7 @@
 
 A PHP + JSON demo. There's no database.
 
-- `index.php`: the form (name, company, strategic priority up to 280 characters). It submits by Ajax and clears after sending.
+- `index.php`: the form (name, company, strategic priority up to 140 characters). It submits by Ajax and clears after sending.
 - `display.php`: the live wall. It checks `api/entries.php` every 3 seconds and adds new entries without a page refresh.
 - `api/submit.php`: checks the fields and saves each entry to `data/entries.json`, using file locking.
 - `config.php`: character limits, timezone and the data file path.

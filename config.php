@@ -31,7 +31,7 @@ function str_length(string $s): int
 define('DATA_FILE', __DIR__ . '/data/entries.json');
 define('MAX_NAME', 100);
 define('MAX_COMPANY', 100);
-define('MAX_PRIORITY', 280);
+define('MAX_PRIORITY', 140);
 
 /**
  * Read all entries from the JSON file (shared lock so we never read a half-written file).
