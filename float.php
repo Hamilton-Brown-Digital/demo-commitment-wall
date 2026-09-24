@@ -42,6 +42,8 @@
     const POLL_MS = 3000;       // how often to check for new entries
     const DRIFT_PX = 28;        // how far each bubble wanders from its spot
     const EDGE = 24;            // keep bubbles this far from the screen edge
+    const COVERAGE = 0.42;      // share of the screen the cards should fill before they start shrinking
+    const MIN_FIT = 0.4;        // smallest the cards will get (0.4 = 40% of full size)
 
     const stage = document.getElementById('stage');
     const backdrop = document.getElementById('focus-backdrop');
@@ -54,38 +56,65 @@
     let etag = null;
     let firstLoad = true;
     let focused = null;         // { bubble, card }
+    let fit = 1;                // current card scale, applied as --fit on the stage
+    let baseArea = 0;           // average card area (px²) at full size
 
     const rand = (min, max) => min + Math.random() * (max - min);
 
-    /* ---------- Placement ---------------------------------------------------
-       "Best candidate" sampling: try a few random spots and keep the one
-       furthest from existing bubbles, so they spread out evenly but randomly. */
-    function place(el) {
-        const W = stage.clientWidth, H = stage.clientHeight;
-        const w = el.offsetWidth, h = el.offsetHeight;
-        const maxX = Math.max(EDGE, W - w - EDGE - DRIFT_PX);
-        const maxY = Math.max(EDGE, H - h - EDGE - DRIFT_PX);
+    /* ---------- Sizing ------------------------------------------------------
+       Cards shrink as the wall fills up: the scale is picked so all cards
+       together cover roughly COVERAGE of the screen. */
+    function measureBaseArea() {
+        const els = [...seen.values()].map(s => s.el);
+        if (!els.length) return;
+        const total = els.reduce((sum, el) => sum + el.offsetWidth * el.offsetHeight, 0);
+        baseArea = total / els.length / (fit * fit);
+    }
 
-        const others = [...seen.values()].map(s => s.el).filter(o => o !== el && o.dataset.cx);
+    function targetFit() {
+        const n = seen.size;
+        if (!n || !baseArea) return 1;
+        const f = Math.sqrt(COVERAGE * stage.clientWidth * stage.clientHeight / (n * baseArea));
+        return Math.max(MIN_FIT, Math.min(1, f));
+    }
+
+    function setFit(f) {
+        fit = f;
+        stage.style.setProperty('--fit', f.toFixed(3));
+    }
+
+    /* ---------- Placement ---------------------------------------------------
+       "Best candidate" sampling: try random spots and keep the one furthest
+       from existing cards, so they spread out evenly but randomly.
+       Positions are card centres, stored as % so they survive resizes. */
+    function place(el, others) {
+        const W = stage.clientWidth, H = stage.clientHeight;
+        const drift = DRIFT_PX * fit;
+        const halfW = el.offsetWidth / 2 + EDGE + drift;
+        const halfH = el.offsetHeight / 2 + EDGE + drift;
         let best = null, bestScore = -1;
 
-        for (let i = 0; i < 30; i++) {
-            const x = rand(EDGE + DRIFT_PX, maxX);
-            const y = rand(EDGE + DRIFT_PX, maxY);
-            const cx = x + w / 2, cy = y + h / 2;
+        for (let i = 0; i < 40; i++) {
+            const cx = rand(halfW, Math.max(halfW, W - halfW));
+            const cy = rand(halfH, Math.max(halfH, H - halfH));
             let score = Infinity;
             for (const o of others) {
-                const d = Math.hypot(cx - o.dataset.cx * W / 100, cy - o.dataset.cy * H / 100);
+                // Compare in "card units" so wide screens don't bias spacing
+                const d = Math.hypot((cx - o.cx * W / 100) / el.offsetWidth, (cy - o.cy * H / 100) / el.offsetHeight);
                 if (d < score) score = d;
             }
-            if (score > bestScore) { bestScore = score; best = { x, y, cx, cy }; }
+            if (score > bestScore) { bestScore = score; best = { cx, cy }; }
         }
 
-        // Store as percentages so the layout survives window resizes
-        el.style.left = (best.x / W * 100) + '%';
-        el.style.top  = (best.y / H * 100) + '%';
-        el.dataset.cx = best.cx / W * 100;
-        el.dataset.cy = best.cy / H * 100;
+        const pos = { cx: best.cx / W * 100, cy: best.cy / H * 100 };
+        el.style.left = pos.cx + '%';
+        el.style.top  = pos.cy + '%';
+        el._pos = pos;
+        return pos;
+    }
+
+    function placedPositions(except) {
+        return [...seen.values()].map(s => s.el).filter(o => o !== except && o._pos).map(o => o._pos);
     }
 
     /* ---------- Bubbles ----------------------------------------------------- */
@@ -113,13 +142,16 @@
         const el = makeBubble(entry);
         el.style.visibility = 'hidden';
         stage.appendChild(el);
-        place(el);
+        seen.set(entry.id, { entry, el });
+        return el;
+    }
+
+    function reveal(el) {
         el.style.visibility = '';
         if (!firstLoad && !reduceMotion) {
             el.classList.add('is-new');
             setTimeout(() => el.classList.remove('is-new'), 6000);
         }
-        seen.set(entry.id, { entry, el });
     }
 
     /* ---------- Enlarge / close -------------------------------------------- */
@@ -183,10 +215,30 @@
 
     /* ---------- Polling ------------------------------------------------------ */
     function update(entries) {
-        entries.forEach(entry => { if (!seen.has(entry.id)) addEntry(entry); });
+        const added = entries.filter(e => !seen.has(e.id)).map(addEntry);
+        if (added.length) {
+            // Work out the new card size, then position the new cards at that size
+            measureBaseArea();
+            const prevFit = fit;
+            setFit(targetFit());
+            if (!firstLoad) stage.classList.add('is-ready');
+
+            // Existing cards shrink in place (CSS transition); new cards need their
+            // final size for placement, so measure them without the transition.
+            added.forEach(el => { el.style.transition = 'none'; });
+            added.forEach(el => place(el, placedPositions(el)));
+            added.forEach(el => { void el.offsetWidth; el.style.transition = ''; reveal(el); });
+        }
         emptyEl.hidden = seen.size > 0;
         firstLoad = false;
     }
+
+    // Re-check sizing when the window changes size (e.g. moving to a bigger screen)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { measureBaseArea(); setFit(targetFit()); }, 250);
+    });
 
     async function poll() {
         try {
