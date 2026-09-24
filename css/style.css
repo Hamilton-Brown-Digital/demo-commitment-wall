@@ -1,0 +1,251 @@
+/* ==========================================================================
+   Commitment Wall – base styles (PwC-inspired)
+   ========================================================================== */
+
+:root {
+    --orange:        #fd5108;  /* PwC primary orange */
+    --orange-dark:   #c43d00;
+    --orange-soft:   #ffcda8;
+    --ink:           #2d2d2d;  /* body text */
+    --ink-muted:     #6b6b6b;
+    --line:          #dedede;
+    --white:         #ffffff;
+    --error:         #c4122f;
+    --success:       #1a7f37;
+
+    --font-heading:  "PwC ITC Charter", "ITC Charter", Charter, "Bitstream Charter", Georgia, serif;
+    --font-body:     "PwC Helvetica Neue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+    --radius:        4px;
+    --shadow:        0 10px 40px rgba(125, 55, 10, 0.12);
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { margin: 0; min-height: 100%; }
+
+body {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: linear-gradient(69deg, #fff 7%, #ffe2e5 50%, #ffcda8 94%) fixed;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Radial overlay (from pwc.com .header_gradient), fixed behind all content */
+body::before {
+    content: "";
+    position: fixed;
+    top: -25vh;
+    left: -25vw;
+    width: 183.87vw;
+    height: 150vh;
+    z-index: 0;
+    opacity: .8;
+    background-image: radial-gradient(circle at 103.2%, #fff0, #ffffffa6 15%, #ffcca8cc 35%, #ffaa7180 65%);
+    pointer-events: none;
+}
+
+body > * { position: relative; z-index: 1; }
+
+h1, h2, h3 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    line-height: 1.15;
+    margin: 0 0 .5em;
+}
+
+/* ==========================================================================
+   Form page
+   ========================================================================== */
+
+.page-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+}
+
+.form-wrap {
+    width: 100%;
+    max-width: 560px;
+    background: var(--white);
+    padding: 48px 48px 40px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--orange);
+}
+
+.form-wrap h1 {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    margin-bottom: 1.25em;
+}
+
+.field { margin-bottom: 24px; }
+
+.field label {
+    display: block;
+    font-weight: 700;
+    font-size: .9375rem;
+    margin-bottom: 8px;
+}
+
+.field input,
+.field textarea {
+    display: block;
+    width: 100%;
+    padding: 12px 14px;
+    font: inherit;
+    color: var(--ink);
+    background: var(--white);
+    border: 1px solid #b5b5b5;
+    border-radius: var(--radius);
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.field textarea { resize: vertical; min-height: 130px; }
+
+.field input:focus,
+.field textarea:focus {
+    outline: none;
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(253, 81, 8, .18);
+}
+
+.field .has-error { border-color: var(--error); }
+
+.field-error {
+    display: block;
+    color: var(--error);
+    font-size: .875rem;
+    margin-top: 6px;
+}
+.field-error:empty { display: none; }
+
+.char-count {
+    display: block;
+    text-align: right;
+    font-size: .8125rem;
+    color: var(--ink-muted);
+    margin-top: 6px;
+}
+.char-count.is-low { color: var(--orange-dark); font-weight: 700; }
+
+#submit-btn {
+    display: inline-block;
+    width: 100%;
+    padding: 14px 28px;
+    font: inherit;
+    font-weight: 700;
+    color: var(--white);
+    background: var(--orange);
+    border: 0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background-color .15s;
+}
+#submit-btn:hover  { background: var(--orange-dark); }
+#submit-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+#submit-btn:disabled { opacity: .6; cursor: progress; }
+
+.form-message {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    font-weight: 700;
+    border-left: 4px solid;
+}
+.form-message--success { color: var(--success); background: #eaf6ec; border-color: var(--success); }
+.form-message--error   { color: var(--error);   background: #fdecee; border-color: var(--error); }
+
+/* ==========================================================================
+   Display page (the wall)
+   ========================================================================== */
+
+.wall {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 56px 40px;
+}
+
+.wall h1 {
+    font-size: clamp(2.25rem, 4vw, 3.5rem);
+    margin-bottom: .2em;
+}
+
+.wall-count {
+    margin: 0 0 40px;
+    color: var(--ink-muted);
+    font-size: 1.125rem;
+}
+#entry-count { color: var(--orange); font-weight: 700; }
+
+.entries {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    align-items: start;
+}
+
+.entry {
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    padding: 28px 28px 22px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--orange);
+}
+
+.entry-priority {
+    margin: 0 0 20px;
+    font-family: var(--font-heading);
+    font-size: 1.375rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.entry-meta {
+    margin: auto 0 4px;
+    font-weight: 700;
+}
+.entry-company { font-weight: 400; color: var(--ink-muted); }
+
+.entry-date {
+    font-size: .8125rem;
+    color: var(--ink-muted);
+}
+
+.empty-state {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: var(--ink-muted);
+}
+
+/* New-entry entrance */
+.entry.is-new { animation: entry-in .6s cubic-bezier(.2, .8, .2, 1) both; }
+
+@keyframes entry-in {
+    from { opacity: 0; transform: translateY(-16px) scale(.97); box-shadow: 0 0 0 6px rgba(253, 81, 8, .35); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .entry.is-new { animation: none; }
+}
+
+/* Small screens */
+@media (max-width: 600px) {
+    .form-wrap { padding: 32px 22px 28px; }
+    .wall { padding: 32px 16px; }
+    .entries { grid-template-columns: 1fr; }
+}
