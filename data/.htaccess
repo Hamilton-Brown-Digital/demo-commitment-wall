@@ -1,0 +1,2 @@
+# Block direct browser access to the raw data file (Apache)
+Require all denied
