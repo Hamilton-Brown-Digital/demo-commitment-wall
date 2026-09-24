@@ -3,6 +3,31 @@
 
 date_default_timezone_set('Europe/London');
 
+// Never let PHP warnings leak into JSON responses; report fatal errors as JSON instead.
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+register_shutdown_function(function () {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        if (!headers_sent()) {
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode(['ok' => false, 'error' => 'Server error: ' . $e['message'] . ' (' . basename($e['file']) . ':' . $e['line'] . ')']);
+    }
+});
+
+/**
+ * Character count that works with or without the mbstring extension.
+ */
+function str_length(string $s): int
+{
+    if (function_exists('mb_strlen')) {
+        return mb_strlen($s, 'UTF-8');
+    }
+    return preg_match_all('/./us', $s);
+}
+
 define('DATA_FILE', __DIR__ . '/data/entries.json');
 define('MAX_NAME', 100);
 define('MAX_COMPANY', 100);
@@ -35,10 +60,10 @@ function read_entries(): array
 function append_entry(array $entry): bool
 {
     $dir = dirname(DATA_FILE);
-    if (!is_dir($dir) && !mkdir($dir, 0775, true)) {
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
         return false;
     }
-    $fp = fopen(DATA_FILE, 'c+');
+    $fp = @fopen(DATA_FILE, 'c+');
     if (!$fp) {
         return false;
     }

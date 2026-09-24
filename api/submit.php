@@ -15,9 +15,9 @@ if ($name === '')     $errors['name'] = 'Please enter your name.';
 if ($company === '')  $errors['company'] = 'Please enter your company.';
 if ($priority === '') $errors['priority'] = 'Please enter a strategic priority.';
 
-if (mb_strlen($name) > MAX_NAME)         $errors['name'] = 'Name is too long.';
-if (mb_strlen($company) > MAX_COMPANY)   $errors['company'] = 'Company name is too long.';
-if (mb_strlen($priority) > MAX_PRIORITY) $errors['priority'] = 'Strategic priority must be ' . MAX_PRIORITY . ' characters or fewer.';
+if (str_length($name) > MAX_NAME)         $errors['name'] = 'Name is too long.';
+if (str_length($company) > MAX_COMPANY)   $errors['company'] = 'Company name is too long.';
+if (str_length($priority) > MAX_PRIORITY) $errors['priority'] = 'Strategic priority must be ' . MAX_PRIORITY . ' characters or fewer.';
 
 if ($errors) {
     json_response(['ok' => false, 'errors' => $errors], 422);
@@ -33,7 +33,7 @@ $entry = [
 ];
 
 if (!append_entry($entry)) {
-    json_response(['ok' => false, 'error' => 'Could not save your entry. Please try again.'], 500);
+    json_response(['ok' => false, 'error' => 'Could not save your entry: PHP cannot write to ' . DATA_FILE . '. Check the data folder is writable.'], 500);
 }
 
 json_response(['ok' => true, 'entry' => $entry], 201);

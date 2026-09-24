@@ -92,7 +92,15 @@
         btn.disabled = true;
         try {
             const res = await fetch('api/submit.php', { method: 'POST', body: new FormData(form) });
-            const data = await res.json();
+            const text = await res.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (parseErr) {
+                console.error('Non-JSON response from api/submit.php (HTTP ' + res.status + '):', text);
+                showMessage('Server error (HTTP ' + res.status + '). See the browser console for details.', 'error');
+                return;
+            }
 
             if (data.ok) {
                 form.reset();
@@ -105,7 +113,8 @@
                 showMessage(data.error || 'Something went wrong. Please try again.', 'error');
             }
         } catch (err) {
-            showMessage('Could not connect. Please try again.', 'error');
+            console.error(err);
+            showMessage('Could not connect to the server. Please try again.', 'error');
         } finally {
             btn.disabled = false;
         }
