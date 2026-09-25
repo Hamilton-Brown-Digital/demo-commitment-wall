@@ -4,9 +4,9 @@
 require __DIR__ . '/../config.php';
 
 clearstatcache(true, DATA_FILE);
-$mtime = file_exists(DATA_FILE) ? filemtime(DATA_FILE) : 0;
-$size  = file_exists(DATA_FILE) ? filesize(DATA_FILE) : 0;
-$etag  = '"' . md5($mtime . '-' . $size) . '"';
+// Hash the contents (not just time + size) so quick edits of the same length,
+// e.g. changing a bucket from "A" to "B", are always picked up.
+$etag = '"' . (file_exists(DATA_FILE) ? md5_file(DATA_FILE) : 'empty') . '"';
 
 header('ETag: ' . $etag);
 header('Cache-Control: no-cache');

@@ -33,6 +33,14 @@ define('MAX_NAME', 100);
 define('MAX_COMPANY', 100);
 define('MAX_PRIORITY', 140);
 
+// Buckets for the sorting page (sort.php). Keys are what's saved in each entry's "bucket" field.
+// Change the labels and colours here; the page and the save endpoint both read this list.
+const BUCKETS = [
+    'A' => ['label' => 'A', 'color' => '#fd5108'],  // PwC orange
+    'B' => ['label' => 'B', 'color' => '#0e7c86'],  // teal
+    'C' => ['label' => 'C', 'color' => '#7b3fa0'],  // purple
+];
+
 /**
  * Read all entries from the JSON file (shared lock so we never read a half-written file).
  */
@@ -82,6 +90,44 @@ function append_entry(array $entry): bool
     flock($fp, LOCK_UN);
     fclose($fp);
     return $ok;
+}
+
+/**
+ * Change one entry in place under an exclusive lock.
+ * $change receives the entry array and returns the updated one.
+ * Returns the updated entry, or null if the id wasn't found / the file couldn't be written.
+ */
+function update_entry(string $id, callable $change): ?array
+{
+    $fp = @fopen(DATA_FILE, 'c+');
+    if (!$fp) {
+        return null;
+    }
+    flock($fp, LOCK_EX);
+    $raw = stream_get_contents($fp);
+    $data = json_decode($raw ?: '[]', true);
+    $updated = null;
+
+    if (is_array($data)) {
+        foreach ($data as $i => $entry) {
+            if (($entry['id'] ?? null) === $id) {
+                $data[$i] = $updated = $change($entry);
+                break;
+            }
+        }
+    }
+
+    if ($updated !== null) {
+        ftruncate($fp, 0);
+        rewind($fp);
+        if (fwrite($fp, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) === false) {
+            $updated = null;
+        }
+        fflush($fp);
+    }
+    flock($fp, LOCK_UN);
+    fclose($fp);
+    return $updated;
 }
 
 function json_response(array $payload, int $status = 200): void

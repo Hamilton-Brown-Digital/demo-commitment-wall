@@ -4,6 +4,9 @@ A PHP + JSON demo. There's no database.
 
 - `index.php`: the form (name, company, strategic priority up to 140 characters). It submits by Ajax and clears after sending.
 - `display.php`: the live wall. It checks `api/entries.php` every 3 seconds and adds new entries without a page refresh.
+- `float.php`: full-screen floating wall. Tap a card to enlarge it.
+- `sort.php`: floating cards above three buckets (A, B, C). Drag a card onto a bucket, or tap it and pick one, to tag it with that bucket's colour. Changes save to the JSON and appear on every open screen. Bucket labels and colours are set in `config.php` (`BUCKETS`).
+- `api/tag.php`: saves an entry's bucket.
 - `api/submit.php`: checks the fields and saves each entry to `data/entries.json`, using file locking.
 - `config.php`: character limits, timezone and the data file path.
 

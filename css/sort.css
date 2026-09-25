@@ -1,0 +1,199 @@
+/* ==========================================================================
+   Sorting page (sort.php) – loads after style.css and float.css
+   Bucket colours come from config.php as --bucket-color on [data-bucket]
+   ========================================================================== */
+
+.page-sort { --bucket-h: clamp(120px, 22vh, 240px); }
+
+/* Floating area stops above the buckets */
+.page-sort .stage {
+    bottom: var(--bucket-h);
+    height: auto;
+}
+.page-sort .float-empty { bottom: var(--bucket-h); }
+
+/* ---------- Cards: untagged cards are neutral, tagged cards take the bucket colour */
+
+.page-sort .bubble-inner {
+    position: relative;
+    border-top-color: #c8c8c8;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .3s ease;
+}
+.page-sort .bubble[data-bucket] .bubble-inner,
+.drag-ghost[data-bucket] {
+    border-top-color: var(--bucket-color);
+    box-shadow: inset 0 0 0 2px var(--bucket-color), 0 6px 24px rgba(125, 55, 10, .12);
+}
+
+.bubble-tag {
+    position: absolute;
+    top: -.65em;
+    right: .6em;
+    display: none;
+    min-width: 1.5em;
+    padding: .1em .45em;
+    font-family: var(--font-body);
+    font-size: .75em;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+    color: var(--white);
+    background: var(--bucket-color);
+    border-radius: 999px;
+}
+.page-sort .bubble[data-bucket] .bubble-tag,
+.drag-ghost[data-bucket] .bubble-tag { display: block; }
+
+/* Cards need to be grabbable, not just clickable */
+.page-sort .bubble { cursor: grab; touch-action: none; }
+body.is-dragging, body.is-dragging * { cursor: grabbing !important; }
+
+/* Highlight one bucket's cards (tap a bucket to toggle).
+   The "show these" rule for each bucket is generated in sort.php from config.php. */
+.page-sort .bubble { transition: opacity .3s ease; }
+.stage[data-filter] .bubble { opacity: .2; }
+
+/* The copy that follows the finger/mouse while dragging */
+.drag-ghost {
+    position: fixed;
+    z-index: 30;
+    margin: 0;
+    pointer-events: none;
+    box-shadow: 0 18px 40px rgba(60, 25, 5, .3);
+    will-change: transform;
+}
+
+/* ---------- Buckets bar ---------------------------------------------------- */
+
+.buckets {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    height: var(--bucket-h);
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: clamp(12px, 1.5vw, 24px);
+    padding: 0 clamp(12px, 1.5vw, 24px) clamp(12px, 1.5vw, 24px);
+    padding-bottom: max(clamp(12px, 1.5vw, 24px), env(safe-area-inset-bottom));
+}
+
+.bucket {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px;
+    font: inherit;
+    color: var(--ink);
+    background: rgba(255, 255, 255, .75);
+    border: 3px dashed var(--bucket-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease;
+}
+
+.bucket::before {
+    /* coloured strip along the top */
+    content: "";
+    position: absolute;
+    inset: -3px -3px auto;
+    height: 8px;
+    background: var(--bucket-color);
+    border-radius: 12px 12px 0 0;
+}
+
+.bucket-label {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 5vh, 3.5rem);
+    line-height: 1;
+    color: var(--bucket-color);
+}
+
+.bucket-count {
+    font-size: clamp(.8125rem, 1.6vh, 1rem);
+    color: var(--ink-muted);
+}
+.bucket-num { font-weight: 700; color: var(--ink); }
+
+/* Card is being dragged over this bucket */
+.bucket.is-over {
+    transform: translateY(-6px) scale(1.02);
+    background: var(--white);
+    border-style: solid;
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--bucket-color) 25%, transparent), 0 12px 30px rgba(60, 25, 5, .18);
+}
+
+/* Bucket selected as a highlight filter */
+.bucket[aria-pressed="true"] {
+    background: var(--bucket-color);
+    border-style: solid;
+}
+.bucket[aria-pressed="true"] .bucket-label,
+.bucket[aria-pressed="true"] .bucket-count,
+.bucket[aria-pressed="true"] .bucket-num { color: var(--white); }
+
+/* Quick bump when a card lands */
+.bucket.is-pulse { animation: bucket-pulse .5s ease; }
+@keyframes bucket-pulse {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* ---------- Bucket buttons in the enlarged card -------------------------- */
+
+.focus-card[data-bucket] { border-top-color: var(--bucket-color); }
+
+.focus-buckets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.focus-bucket {
+    min-width: 64px;
+    min-height: 48px;
+    padding: 10px 20px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: var(--bucket-color);
+    background: var(--white);
+    border: 2px solid var(--bucket-color);
+    border-radius: var(--radius);
+    cursor: pointer;
+}
+.focus-bucket[aria-pressed="true"] {
+    color: var(--white);
+    background: var(--bucket-color);
+}
+.focus-bucket--none { --bucket-color: var(--ink-muted); }
+
+.page-sort .focus-hint { margin-top: 20px; }
+
+/* ---------- Save error message ------------------------------------------- */
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--bucket-h) + 16px);
+    z-index: 40;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    color: var(--white);
+    background: var(--error);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    font-weight: 700;
+}
+.toast[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .bucket.is-pulse { animation: none; }
+}
