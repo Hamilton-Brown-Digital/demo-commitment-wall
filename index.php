@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <title>Share your strategic priority</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -106,7 +106,13 @@
                 form.reset();
                 updateCount();
                 showMessage('Thank you for submitting, ' + data.entry.name + '!', 'success');
-                form.elements.name.focus();
+                // On touch screens, close the keyboard so the next person sees the whole form
+                if (window.matchMedia('(pointer: coarse)').matches) {
+                    document.activeElement && document.activeElement.blur();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    form.elements.name.focus();
+                }
             } else if (data.errors) {
                 showErrors(data.errors);
             } else {
@@ -121,5 +127,6 @@
     });
 })();
 </script>
+<script src="js/touch.js"></script>
 </body>
 </html>

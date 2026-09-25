@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <title>Strategic priorities</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -94,5 +94,6 @@
     poll();
 })();
 </script>
+<script src="js/touch.js"></script>
 </body>
 </html>

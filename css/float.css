@@ -5,6 +5,8 @@
 .page-float {
     height: 100vh;
     overflow: hidden;
+    touch-action: none;                 /* nothing to scroll on this page, so block all touch gestures */
+    overscroll-behavior: none;          /* no pull-to-refresh / bounce */
 }
 
 .stage {
@@ -63,11 +65,30 @@
     transition: transform .25s ease, box-shadow .25s ease;
 }
 
-.bubble:hover .bubble-inner,
+/* Hover grow only for real mouse pointers, so it doesn't stick on the last card tapped */
+@media (hover: hover) and (pointer: fine) {
+    .bubble:hover .bubble-inner {
+        transform: scale(calc(var(--scale, 1) * 1.08));
+        box-shadow: 0 10px 32px rgba(125, 55, 10, .22);
+    }
+}
 .bubble:focus-visible .bubble-inner {
     transform: scale(calc(var(--scale, 1) * 1.08));
     box-shadow: 0 10px 32px rgba(125, 55, 10, .22);
 }
+
+/* Invisible padding around each card so small cards are easier to hit with a finger */
+.bubble::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+}
+@media (pointer: coarse) {
+    .bubble::before { inset: -14px; }
+}
+
+/* Brief press feedback on touch */
+.bubble:active .bubble-inner { transform: scale(calc(var(--scale, 1) * .96)); }
 .bubble:focus-visible { outline: none; }
 .bubble:focus-visible .bubble-inner { outline: 2px solid var(--orange); outline-offset: 2px; }
 

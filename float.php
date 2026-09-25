@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <title>Strategic priorities – floating wall</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/float.css">
@@ -43,7 +43,8 @@
     const DRIFT_PX = 28;        // how far each bubble wanders from its spot
     const EDGE = 24;            // keep bubbles this far from the screen edge
     const COVERAGE = 0.42;      // share of the screen the cards together should fill; sets the card size
-    const MIN_FIT = 0.4;        // smallest the cards will get (0.4 = 40% of normal size)
+    const IS_TOUCH = window.matchMedia('(pointer: coarse)').matches;
+    const MIN_FIT = IS_TOUCH ? 0.55 : 0.4;  // smallest the cards will get; kept larger on touch screens so they're easier to tap
     const MAX_FIT = 2.4;        // biggest the cards will get when there are only a few (2.4 = 240%)
 
     const stage = document.getElementById('stage');
@@ -156,7 +157,17 @@
     }
 
     /* ---------- Enlarge / close -------------------------------------------- */
+    // Ignore a second tap that lands straight after the first (stops double-taps opening then closing)
+    let lastToggle = 0;
+    function tooSoon() {
+        const now = Date.now();
+        if (now - lastToggle < 400) return true;
+        lastToggle = now;
+        return false;
+    }
+
     function openFocus(bubble, entry) {
+        if (tooSoon()) return;
         if (focused) return closeFocus();
 
         const card = focusTpl.content.firstElementChild.cloneNode(true);
@@ -191,8 +202,10 @@
         focused = { bubble, card, from: { dx, dy, s } };
     }
 
-    function closeFocus() {
+    function closeFocus(e) {
         if (!focused) return;
+        const viaKeyboard = e && e.type === 'keydown';
+        if (!viaKeyboard && e && tooSoon()) return;
         const { bubble, card, from } = focused;
         focused = null;
 
@@ -201,7 +214,8 @@
             card.remove();
             bubble.classList.remove('is-source');
             backdrop.hidden = true;
-            bubble.focus({ preventScroll: true });
+            // Only move keyboard focus back for keyboard users, otherwise a focus ring can appear after a tap
+            if (viaKeyboard) bubble.focus({ preventScroll: true });
         };
 
         if (reduceMotion) return done();
@@ -212,7 +226,7 @@
     }
 
     backdrop.addEventListener('click', closeFocus);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFocus(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFocus(e); });
 
     /* ---------- Polling ------------------------------------------------------ */
     function update(entries) {
@@ -260,5 +274,6 @@
     poll();
 })();
 </script>
+<script src="js/touch.js"></script>
 </body>
 </html>
