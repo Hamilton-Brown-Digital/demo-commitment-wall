@@ -3,6 +3,7 @@
 A PHP + JSON demo. There's no database.
 
 - `index.php`: the form (name, company, strategic priority up to 140 characters). It submits by Ajax and clears after sending.
+- `vote.php`: the same form styled as a voting slip. On submit the slip folds in half and drops into a ballot box, then a fresh slip appears. Saves to the same place as `index.php`.
 - `display.php`: the live wall. It checks `api/entries.php` every 3 seconds and adds new entries without a page refresh.
 - `float.php`: full-screen floating wall. Tap a card to enlarge it.
 - `sort.php`: floating cards above three buckets (A, B, C). Drag a card onto a bucket, or tap it and pick one, to tag it with that bucket's colour. Changes save to the JSON and appear on every open screen. Bucket labels and colours are set in `config.php` (`BUCKETS`).
